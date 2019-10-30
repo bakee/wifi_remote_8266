@@ -9,10 +9,34 @@
 #define STAPSK  "bakee04eee123456"
 #endif
 
+#define BROADCAST_INTERVAL (20000)
+
 const char* ssid = STASSID;
 const char* password = STAPSK;
 
-const String RoomName = "South West";
+//const String RoomName = "South West";
+//const String RoomName = "South West Varanda";
+//
+//const String RoomName = "South East";
+//const String RoomName = "South East Varanda";
+//
+//const String RoomName = "East";
+//
+//const String RoomName = "Kitchen";
+//
+//const String RoomName = "Dining";
+//
+//const String RoomName = "North";
+//
+//const String RoomName = "Drawing North";
+//const String RoomName = "Drawing South";
+//
+//const String RoomName = "North West";
+//const String RoomName = "North West Varanda";
+//
+//const String RoomName = "Guest";
+//const String RoomName = "Guest Varanda";
+
 const unsigned int udpPort = 64101;
 
 WiFiUDP Udp;
@@ -51,12 +75,12 @@ String getResponse(String roomName) {
   response += "<meta http-equiv='refresh' content='15'>";
   response += "<style>";
   response += ".title {text-align:center; background-color:#996633; color: #CCCCFF}";
-  response += "h3 {color:#3333CC}";
-  response += "a {text-decoration:none}";
-  response += ".status {background-color:#339933;padding: 10px 15px; margin-left:30px; color:#663399}";
+  response += "h3 {color:#3333CC; margin-bottom:0;}";
+  response += "a {text-decoration:none;}";
   response += ".container {max-width:800px; margin:10px auto; background-color:#9A9; padding:15px}";
-  response += ".on-switch {background-color:#66CC33;padding: 10px 15px; margin:30px; color:#FFFFFF}";
-  response += ".off-switch {background-color:#CC3344;padding: 10px 15px; margin:30px; color:#FFFFFF}";
+  response += ".on-switch {background-color:#66CC33;padding: 10px 15px; color:#FFFFFF; float:left;}";
+  response += ".off-switch {background-color:#CC3344;padding: 10px 15px; color:#FFFFFF; float:right;}";
+  response += "hr {clear:both;}";
   response += "</style>";
   response += "<title>WiFi Remote</title></head>";
   response += "<body style='background-color:#CCC; font-family: tahoma; line-height:2em; font-size:1.5em;'>";
@@ -68,9 +92,9 @@ String getResponse(String roomName) {
   for(int i = 0; i < 4; i++) {   
     response += "<h3>Switch: ";
     response += (i + 1);
-    response += "<span class='status'>";
+    response += " is now ";
     response += getStatusString(i);
-    response += "</span></h3>";
+    response += "</h3>";
     
     response += "<a href='/?l=";
     response += i;
@@ -198,7 +222,7 @@ void loop(void) {
   server.handleClient();  
   MDNS.update();
 
-  if(millis() - timeStamp > 5000) {
+  if(millis() - timeStamp > BROADCAST_INTERVAL) {
     timeStamp = millis();
     SendUdpPacket();
   }
