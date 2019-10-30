@@ -2,6 +2,7 @@
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
+#include <WiFiUdp.h>
 
 #ifndef STASSID
 #define STASSID "Danger5"
@@ -11,7 +12,14 @@
 const char* ssid = STASSID;
 const char* password = STAPSK;
 
+const String RoomName = "South West";
+const unsigned int udpPort = 64101;
+
+WiFiUDP Udp;
+
 ESP8266WebServer server(8081);
+
+unsigned long timeStamp = 0;
 
 int status[4] = {0};
 
@@ -38,9 +46,51 @@ String getStatusString(int led) {
   return lightStatus;
 }
 
+String getResponse(String roomName) {
+  String response = "<html><head>";
+  response += "<meta http-equiv='refresh' content='15'>";
+  response += "<style>";
+  response += ".title {text-align:center; background-color:#996633; color: #CCCCFF}";
+  response += "h3 {color:#3333CC}";
+  response += "a {text-decoration:none}";
+  response += ".status {background-color:#339933;padding: 10px 15px; margin-left:30px; color:#663399}";
+  response += ".container {max-width:800px; margin:10px auto; background-color:#9A9; padding:15px}";
+  response += ".on-switch {background-color:#66CC33;padding: 10px 15px; margin:30px; color:#FFFFFF}";
+  response += ".off-switch {background-color:#CC3344;padding: 10px 15px; margin:30px; color:#FFFFFF}";
+  response += "</style>";
+  response += "<title>WiFi Remote</title></head>";
+  response += "<body style='background-color:#CCC; font-family: tahoma; line-height:2em; font-size:1.5em;'>";
+  response += "<div class='container'>";
+  response += "<h2 class='title'><a href='/'>WiFi Remote<br/>(Room: ";
+  response += roomName;
+  response += ")</a></h2><hr/>";
+
+  for(int i = 0; i < 4; i++) {   
+    response += "<h3>Switch: ";
+    response += (i + 1);
+    response += "<span class='status'>";
+    response += getStatusString(i);
+    response += "</span></h3>";
+    
+    response += "<a href='/?l=";
+    response += i;
+    response += "&s=1' class='on-switch'>Turn On</a>";
+    
+    response += "<a href='/?l=";
+    response += i;
+    response += "&s=0' class='off-switch'>Turn Off</a>";
+    
+    response += "<hr/>";
+  }
+
+  response += "&copy; Md. Abdullah-Al-Bakee</div></body></html>";
+
+  return response;
+}
+
 void handleRoot() {
   if(!server.hasArg("l")) {
-    server.send(200, "text/html", "<html><head><style>ul{list-style-type:none;} a{text-decoration:none;}</style><title>WiFi Remote</title></head><body style='background-color:#CCC; font-family: tahoma; line-height:2em; font-size:1.5em;'><div style='max-width:800px; margin:10px auto; background-color:#9A9; padding:15px'><h1 style='text-align:center'>Welcome to WiFi Remote</h1><hr/><h2>Usage:</h2><h3>First Switch</h3><ul><li><a href='/?l=0'>Get Status</a></li><li><a href='/?l=0&s=1'>Turn On</a></li><li><a href='/?l=0&s=0'>Turn Off</a></li></ul><h3>Second Switch</h3><ul><li><a href='/?l=1'>Get Status</a></li><li><a href='/?l=1&s=1'>Turn On</a></li><li><a href='/?l=1&s=0'>Turn Off</a></li></ul><h3>Third Switch</h3><ul><li><a href='/?l=2'>Get Status</a></li><li><a href='/?l=2&s=1'>Turn On</a></li><li><a href='/?l=2&s=0'>Turn Off</a></li></ul><h3>Fourth Switch</h3><ul><li><a href='/?l=3'>Get Status</a></li><li><a href='/?l=3&s=1'>Turn On</a></li><li><a href='/?l=3&s=0'>Turn Off</a></li></ul></div></body></html>");
+    server.send(200, "text/html", getResponse(RoomName));
     return;
   }
 
@@ -48,33 +98,6 @@ void handleRoot() {
   String lightNo;
   int ledIndex;
   String lightName;
-
-  if(server.hasArg("l") && !server.hasArg("s")) {
-    lightNo = server.arg("l");        
-    if(String("0") == lightNo) { 
-      lightName = "first"; 
-      ledIndex = 0; 
-    }
-    else if (String("1") == lightNo) { 
-      lightName = "second"; 
-      ledIndex = 1; 
-    }
-    else if (String("2") == lightNo) { 
-      lightName = "third"; 
-      ledIndex = 2; 
-    }
-    else if (String("3") == lightNo) { 
-      lightName = "fourth"; 
-      ledIndex = 3; 
-    }
-    else { 
-      server.send(500, "text/plain", "Invalid command!");
-      return; 
-    }
-      
-    server.send(200, "text/html", "<html><head><style>ul{list-style-type:none;} a{text-decoration:none;}</style><title>WiFi Remote</title></head><body style='background-color:#CCC; font-family: tahoma; line-height:2em; font-size:1.5em;'><div style='max-width:800px; margin:10px auto; background-color:#9A9; padding:15px'><h1 style='text-align:center'>Welcome to WiFi Remote</h1><hr/><h3>Status of " + lightName + " switch is : <b>" + getStatusString(ledIndex) + "</b></h3><p><a href='/'>Home</a></div></body></html>");
-    return;
-  }
 
   if(server.hasArg("l") && server.hasArg("s")) {
     lightNo = server.arg("l");
@@ -106,7 +129,9 @@ void handleRoot() {
       turnOn(ledIndex);
     }
 
-    server.send(200, "text/html", "<html><head><style>ul{list-style-type:none;} a{text-decoration:none;}</style><title>WiFi Remote</title></head><body style='background-color:#CCC; font-family: tahoma; line-height:2em; font-size:1.5em;'><div style='max-width:800px; margin:10px auto; background-color:#9A9; padding:15px'><h1 style='text-align:center'>Welcome to WiFi Remote</h1><hr/><h3>" + lightName + " switch is now: <b>" + getStatusString(ledIndex) + "</b></h3><a href='/'>Home</a></div></body></html>");
+    server.sendHeader("Location", String("/"), true);
+    server.send ( 302, "text/plain", "");
+    //server.send(200, "text/html", getResponse(RoomName));
     return;
   }
     
@@ -147,6 +172,8 @@ void setup(void) {
     delay(500);
   }
 
+Udp.begin(udpPort);
+
   if (MDNS.begin("esp8266")) {
     Serial.println("MDNS responder started");
   }
@@ -154,9 +181,25 @@ void setup(void) {
   server.on("/", handleRoot);
   server.onNotFound(handleNotFound);
   server.begin();
+  timeStamp = millis();
 }
 
+void SendUdpPacket() {
+    String message = "Room: " + RoomName + ", IP: " + WiFi.localIP().toString();
+    IPAddress UdpIp;
+    UdpIp.fromString("192.168.8.255");
+    Udp.beginPacket(UdpIp, udpPort);
+    Udp.write(message.c_str());
+    Udp.endPacket();
+}
+
+
 void loop(void) {
-  server.handleClient();
+  server.handleClient();  
   MDNS.update();
+
+  if(millis() - timeStamp > 5000) {
+    timeStamp = millis();
+    SendUdpPacket();
+  }
 }
