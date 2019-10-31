@@ -8,7 +8,7 @@ const unsigned int udpPort = 64101;
 unsigned long lastBroadcastTime = 0;
 
 void broadcast() {
-    String message = "Room: " + RoomName + ", MAC: " + WiFi.macAddress() + ", IP: " + WiFi.localIP().toString();    
+    String message = "Room: " + RoomName + ", MAC: " + WiFi.macAddress() + ", RSSI: " + WiFi.RSSI() + " dBm, IP: " + WiFi.localIP().toString();    
     Udp.beginPacket(udpIp, udpPort);
     Udp.write(message.c_str());
     Udp.endPacket();
