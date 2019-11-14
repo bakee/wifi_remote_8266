@@ -1,22 +1,22 @@
 int status[4] = {0};
 
-void turnOn(int led) {
-  digitalWrite(led, HIGH);
-  status[led] = 1;  
+void turnOn(int pin) {  
+  digitalWrite(pin, HIGH);
+  status[pin] = 1;  
 }
 
-void turnOff(int led) {
-  digitalWrite(led, LOW);
-  status[led] = 0;
+void turnOff(int pin) { 
+  digitalWrite(pin, LOW);
+  status[pin] = 0;
 }
 
-int getStatus(int led) {
-  return status[led];
+int getStatus(int pin) {
+  return status[pin];
 }
 
-String getStatusString(int led) {
+String getStatusString(int pin) {
   String lightStatus = "Off";
-  if(getStatus(led) == 1) { 
+  if(getStatus(pin) == 1) { 
     lightStatus = "On"; 
   }
 
