@@ -1,13 +1,9 @@
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
+#include "wifi_credentials.h"
 
-#ifndef STASSID
-#define STASSID "Danger5"
-#define STAPSK  "bakee04eee123456"
-#endif
-
-const char* ssid = STASSID;
-const char* password = STAPSK;
+const char* ssid = WIFI_SSID;
+const char* password = WIFI_PASSWORD;
 
 void wifi_setup() {
   WiFi.mode(WIFI_STA);
